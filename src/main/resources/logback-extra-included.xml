@@ -1,0 +1,33 @@
+<included>
+
+    <!-- Inject Spring Environment -->
+    <newRule pattern="configuration/springProperty/injectSpringEnv"
+             actionClass="me.in1978.third.logback.InjectSpringEnvAction"/>
+    <springProperty name="ignore-me" source="ignore-me">
+        <injectSpringEnv/>
+    </springProperty>
+
+    <!-- register my actions -->
+    <newRule pattern="*/for" actionClass="me.in1978.third.logback.ForAction"/>
+    <newRule pattern="*/hiddenItr" actionClass="me.in1978.third.logback.HiddenItrAction"/>
+    <newRule pattern="*/echo" actionClass="me.in1978.third.logback.EchoAction"/>
+    <newRule pattern="configuration/springProperty2" actionClass="me.in1978.third.logback.ComplexSpringPropertyAction"/>
+
+    <!--
+    START prevent all children from executing directly
+    -->
+    <newRule pattern="*/for/*" actionClass="ch.qos.logback.core.joran.action.NOPAction"/>
+    <newRule pattern="*/for/echo" actionClass="ch.qos.logback.core.joran.action.NOPAction"/>
+    <!-- SpringBootJoranConfigurator -->
+    <!--    <newRule pattern="*/for/springProfile" actionClass="ch.qos.logback.core.joran.action.NOPAction"/>-->
+    <!-- JoranConfigurator -->
+    <!--    <newRule pattern="*/for/if" actionClass="ch.qos.logback.core.joran.action.NOPAction"/>-->
+    <!--    <newRule pattern="*/for/if/then" actionClass="ch.qos.logback.core.joran.action.NOPAction"/>-->
+    <!--    <newRule pattern="*/for/if/else" actionClass="ch.qos.logback.core.joran.action.NOPAction"/>-->
+    <!-- JoranConfiguratorBase -->
+    <!--    <newRule pattern="*/for/param" actionClass="ch.qos.logback.core.joran.action.NOPAction"/>-->
+    <!--
+    END prevent all children from executing directly
+     -->
+
+</included>
