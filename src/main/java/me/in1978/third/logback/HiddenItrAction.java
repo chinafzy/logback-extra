@@ -53,23 +53,34 @@ public class HiddenItrAction extends Action {
         String qname = _atts.getValue("name");
 
         Object o = itr.next();
+        LogDef logDef = parse(o);
 
         final List<SaxEvent> members = scopedContext.getLocal(EVENTS_KEY);
 
-        Map<String, String> local = new HashMap<>();
-        local.put("name", qname);
-        local.put("value", o + "");
-        StartEvent propertyStart = Events.mockStartEvent((StartEvent) members.get(0), "property", local);
-        EndEvent propertyEnd = Events.mockEndEvent(members.get(members.size() - 1), "property");
-
         List<SaxEvent> evs = new ArrayList<>();
-        evs.add(propertyStart);
-        evs.add(propertyEnd);
+        evs.addAll(proEvents(members, qname, logDef.getOri()));
+        evs.addAll(proEvents(members, qname + ".target", logDef.getTarget()));
         evs.addAll(members);
 
         // next loop
         ic.getJoranInterpreter().getEventPlayer().addEventsDynamically(evs, 1);
     }
 
+    private static List<SaxEvent> proEvents(List<SaxEvent> members, String name, String value) {
+        Map<String, String> local = new HashMap<>();
+        local.put("name", name);
+        local.put("value", value);
+        StartEvent propertyStart = Events.mockStartEvent((StartEvent) members.get(0), "property", local);
+        EndEvent propertyEnd = Events.mockEndEvent(members.get(members.size() - 1), "property");
+        return List.of(propertyStart, propertyEnd);
+    }
+
+    private static LogDef parse(Object v) {
+        String s = "" + v;
+        String[] arr = s.split(":");
+        String ori = arr[0].trim();
+        String target = (arr.length > 1 ? arr[1] : arr[0]).trim();
+        return new LogDef(ori, target);
+    }
 
 }
