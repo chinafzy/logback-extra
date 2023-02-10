@@ -13,6 +13,8 @@ import org.xml.sax.Attributes;
 import java.util.*;
 import java.util.function.DoubleSupplier;
 import java.util.stream.DoubleStream;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class ForAction extends Action implements InPlayListener {
     public static final Stack<ScopedContext> scopes = new Stack<>();
@@ -36,13 +38,20 @@ public class ForAction extends Action implements InPlayListener {
         ScopedContext scopedContext = scopes.peek();
 
         Attributes attributes = scopedContext.getLocal(HiddenItrAction.ATTS_KEY);
-        Iterator<Object> itr;
-        boolean foundItr = (itr = tryItrOf(attributes)) != null
-                || (itr = tryItrFromTo(attributes)) != null;
+        Stream<String> objs;
+        boolean foundItr = (objs = tryItrOf(ic, attributes)) != null
+                || (objs = tryItrFromTo(attributes)) != null;
         if (!foundItr) {
             addError("cannot build iterator");
             return;
         }
+
+        Iterator<String> itr = objs
+                .flatMap(s -> Stream.of(s.split("[\\n;]")))
+                .map(String::trim)
+                .filter(StringUtils::hasLength)
+                .filter(s -> !s.startsWith("#"))
+                .iterator();
 
         List<SaxEvent> hiddenEvents = Arrays.asList(
                 Events.mockStartEvent((StartEvent) events.get(0), "hiddenItr", new HashMap<>()),
@@ -60,16 +69,17 @@ public class ForAction extends Action implements InPlayListener {
         ic.getJoranInterpreter().getEventPlayer().addEventsDynamically(hiddenEvents, 1);
     }
 
-    private Iterator<Object> tryItrOf(Attributes attributes) {
+    private Stream<String> tryItrOf(InterpretationContext ic, Attributes attributes) {
         String of = attributes.getValue("of");
         Object inObj = null;
 
         if (StringUtils.hasLength(of)) {
-            inObj = this.context.getObject(of);
-            if (inObj == null) {
+            String ofValue = ic.subst(of);
+            if (!StringUtils.hasLength(ofValue)) {
                 addError("value not found:" + of);
                 return null;
             }
+            return Stream.of(ofValue);
         }
 
         String ofSpring = attributes.getValue("of-spring");
@@ -87,16 +97,18 @@ public class ForAction extends Action implements InPlayListener {
         }
 
         if (inObj instanceof Iterable) {
-            return ((Iterable) inObj).iterator();
+            return StreamSupport.stream(Spliterators.spliterator(((Iterable) inObj).iterator(), Integer.MAX_VALUE, 0), false)
+                    .map(obj -> obj + "")
+                    ;
         } else if (inObj instanceof Object[]) {
-            return Arrays.asList((Object[]) inObj).iterator();
+            return Stream.of((Object[]) inObj).map(obj -> obj + "");
         } else {
             addError("not a Iterable or Object[]:" + of + ", " + of.getClass().getName());
             return null;
         }
     }
 
-    private Iterator<Object> tryItrFromTo(Attributes attributes) {
+    private Stream<String> tryItrFromTo(Attributes attributes) {
         Number from = getVarOrConst(attributes, "from"),
                 to = getVarOrConst(attributes, "to"),
                 step = getVarOrConst(attributes, "step");
@@ -117,9 +129,9 @@ public class ForAction extends Action implements InPlayListener {
                     }
                 })
                 .takeWhile(d -> d < to.doubleValue())
-                .mapToObj(Double::valueOf)
-                .map(Object.class::cast)
-                .iterator()
+                .mapToObj(d -> d + "")
+//                .map(Object.class::cast)
+//                .iterator()
                 ;
     }
 
