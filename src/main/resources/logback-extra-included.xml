@@ -9,6 +9,7 @@
 
     <!-- register my actions -->
     <newRule pattern="*/for" actionClass="me.in1978.third.logback.ForAction"/>
+    <newRule pattern="*/my-logs" actionClass="me.in1978.third.logback.MyLogsAction"/>
     <newRule pattern="*/hiddenItr" actionClass="me.in1978.third.logback.HiddenItrAction"/>
     <newRule pattern="*/echo" actionClass="me.in1978.third.logback.EchoAction"/>
     <newRule pattern="configuration/springProperty2" actionClass="me.in1978.third.logback.ComplexSpringPropertyAction"/>
